@@ -25,10 +25,12 @@ def parse_args(args):
                    help='Local path within a git repo with a github remote.')
 
     p.add_argument('LINE',
+                   type=int,
                    nargs='?',
                    help='Line number (or starting line).')
 
     p.add_argument('ENDLINE',
+                   type=int,
                    nargs='?',
                    help='Ending line for a range URL.')
 
