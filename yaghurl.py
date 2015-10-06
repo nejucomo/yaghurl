@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 
-import sys
 import os
-import subprocess
+import sys
 import argparse
+import urlparse
+import subprocess
 
 
 def main(args=sys.argv[1:]):
@@ -12,7 +13,9 @@ def main(args=sys.argv[1:]):
     """
     opts = parse_args(args)
     urlish = get_remote_urlish(opts.LOCALPATH, opts.REMOTE)
-    raise NotImplementedError(urlish)
+    url = patch_git_urlish(urlish)
+    urlp = urlparse.urlparse(url)
+    raise NotImplementedError(urlp)
 
 
 def parse_args(args):
@@ -62,6 +65,17 @@ def get_remote_urlish(path, remotename):
             assert kind == '(push)', 'unknown remote kind: {}'.format(kind)
 
     assert False, 'remote {} not found.'.format(remotename)
+
+
+def patch_git_urlish(urlish):
+    PREFIX = 'git@github.com:'
+    SUFFIX = '.git'
+    if urlish.startswith(PREFIX):
+        assert urlish.endswith(SUFFIX), repr(urlish)
+        guts = urlish[len(PREFIX):-len(SUFFIX)]
+        return 'https://github.com/' + guts
+    else:
+        return urlish
 
 
 if __name__ == '__main__':
