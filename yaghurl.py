@@ -9,7 +9,9 @@ import subprocess
 
 def main(args=sys.argv[1:]):
     """
-    Yet Another GitHub URL tool - produce public URLs from local paths.
+    Yaghurl: A GitHub URL tool - produce public URLs from local paths.
+
+    Pronounced as if hurling a yag.
     """
     opts = parse_args(args)
     (urlish, relpath, branch, commit) = get_git_info(opts.LOCALPATH, opts.REMOTE)
