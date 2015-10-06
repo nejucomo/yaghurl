@@ -57,7 +57,7 @@ def get_remote_urlish(path, remotename):
     for line in output.splitlines():
         [name, urlish, kind] = line.split()
         if kind == '(fetch)':
-            if remotename is None:
+            if remotename is None and urlish.find('github.com') != -1:
                 return urlish
             elif name == remotename:
                 return urlish
@@ -69,10 +69,8 @@ def get_remote_urlish(path, remotename):
 
 def patch_git_urlish(urlish):
     PREFIX = 'git@github.com:'
-    SUFFIX = '.git'
     if urlish.startswith(PREFIX):
-        assert urlish.endswith(SUFFIX), repr(urlish)
-        guts = urlish[len(PREFIX):-len(SUFFIX)]
+        guts = urlish[len(PREFIX):]
         return 'https://github.com/' + guts
     else:
         return urlish
