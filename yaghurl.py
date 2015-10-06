@@ -13,10 +13,12 @@ def main(args=sys.argv[1:]):
     """
     opts = parse_args(args)
     (urlish, relpath, branch, commit) = get_git_info(opts.LOCALPATH, opts.REMOTE)
-    (branchurl, commiturl) = calculate_urls(urlish, relpath, branch, commit)
+    (branchurl, commiturl) = calculate_urls(urlish, relpath, branch, commit,
+                                            opts.LINE, opts.ENDLINE)
 
     displayfunc = globals()['display_' + opts.FORMAT]
-    displayfunc(sys.stdout, opts.MODE, relpath, branch, branchurl, commit, commiturl)
+    displayfunc(sys.stdout, opts.MODE, relpath, branch, branchurl,
+                commit, commiturl, opts.LINE, opts.ENDLINE)
 
 
 def parse_args(args):
@@ -24,13 +26,13 @@ def parse_args(args):
 
     p.add_argument('-m', '--mode',
                    dest='MODE',
-                   default='commit',
+                   default='both',
                    choices=['commit', 'branch', 'both'],
                    help='Show a commit or branch specific URL, or show both.')
 
     p.add_argument('-f', '--format',
                    dest='FORMAT',
-                   default='bare',
+                   default='comment',
                    choices=['bare', 'comment'],
                    help=('Display the results in a bare (plain text) or '
                          + 'github-style comment format.'))
@@ -58,7 +60,7 @@ def parse_args(args):
 
 
 def get_git_info(path, remotename):
-    git = GitCmd(path)
+    git = GitWrapper(path)
     urlish = get_remote_urlish(git, remotename)
     branch = git('rev-parse', '--abbrev-ref', 'HEAD').strip()
     commit = git('rev-parse', 'HEAD').strip()
@@ -88,7 +90,7 @@ def patch_git_urlish(urlish):
         return urlish
 
 
-class GitCmd (object):
+class GitWrapper (object):
     def __init__(self, path):
         relparts = []
 
@@ -101,40 +103,59 @@ class GitCmd (object):
             d = pop_path(d)
 
         self.repodir = d
+
+        relparts.append('.')
         self.relpath = '/'.join(reversed(relparts))
 
     def __call__(self, *args):
         return subprocess.check_output(['git'] + list(args), cwd=self.repodir)
 
 
-def calculate_urls(urlish, relpath, branch, commit):
+def calculate_urls(urlish, relpath, branch, commit, line, endline):
     url = patch_git_urlish(urlish)
     urlp = urlparse.urlparse(url)
-    urltmpl = '{scheme}://{netloc}/{basepath}/blob/{{}}/{relpath}'.format(
+    urltmpl = '{scheme}://{netloc}/{basepath}/blob/{{}}/{relpath}{linefrag}'.format(
         scheme=urlp.scheme,
         netloc=urlp.netloc,
         basepath=urlp.path,
         relpath=relpath,
+        linefrag=calculate_linefrag(line, endline),
         )
 
     return (urltmpl.format(branch), urltmpl.format(commit))
 
 
-def display_bare(f, mode, _relpath, _branch, branchurl, _commit, commiturl):
+def calculate_linefrag(line, endline):
+    linefrag = ''
+    if line is not None:
+        linefrag += '#L{}'.format(line)
+        if endline is not None:
+            linefrag += '-L{}'.format(endline)
+    return linefrag
+
+
+def display_bare(f, mode, _relpath, _branch, branchurl, _commit,
+                 commiturl, _line, _endline):
+
     if mode == 'branch' or mode == 'both':
         f.write('{}\n'.format(branchurl))
     if mode == 'commit' or mode == 'both':
         f.write('{}\n'.format(commiturl))
 
 
-def display_comment(f, mode, relpath, branch, branchurl, commit, commiturl):
+def display_comment(f, mode, relpath, branch, branchurl, commit,
+                    commiturl, line, endline):
+
+    linedesc = calculate_linefrag(line, endline).replace('#', ' ')
+
     commit = commit[:8]
     if mode == 'both':
         f.write(
-            ('[``{relpath}`` at ``{commit}``]({commiturl}) '
+            ('[``{relpath}``{linedesc} at ``{commit}``]({commiturl}) '
              + '([latest on branch ``{branch}``]({branchurl}))\n')
             .format(
                 relpath=relpath,
+                linedesc=linedesc,
                 commit=commit,
                 commiturl=commiturl,
                 branch=branch,
@@ -142,17 +163,19 @@ def display_comment(f, mode, relpath, branch, branchurl, commit, commiturl):
             ))
     elif mode == 'commit':
         f.write(
-            '[``{relpath}`` at ``{commit}``]({url})\n'
+            '[``{relpath}``{linedesc} at ``{commit}``]({url})\n'
             .format(
                 relpath=relpath,
+                linedesc=linedesc,
                 commit=commit,
                 url=commiturl,
             ))
     elif mode == 'branch':
         f.write(
-            '[``{relpath}`` on branch ``{branch}``]({url})\n'
+            '[``{relpath}``{linedesc} on branch ``{branch}``]({url})\n'
             .format(
                 relpath=relpath,
+                linedesc=linedesc,
                 branch=branch,
                 url=branchurl,
             ))
