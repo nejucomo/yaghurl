@@ -19,8 +19,10 @@ def main(args=sys.argv[1:]):
                                             opts.LINE, opts.ENDLINE)
 
     displayfunc = globals()['display_' + opts.FORMAT]
-    displayfunc(sys.stdout, opts.MODE, relpath, branch, branchurl,
-                commit, commiturl, opts.LINE, opts.ENDLINE)
+
+    with Outputter(opts.OUTPUT) as outfile:
+        displayfunc(outfile, opts.MODE, relpath, branch, branchurl,
+                    commit, commiturl, opts.LINE, opts.ENDLINE)
 
 
 def parse_args(args):
@@ -38,6 +40,12 @@ def parse_args(args):
                    choices=['bare', 'comment'],
                    help=('Display the results in a bare (plain text) or '
                          + 'github-style comment format.'))
+
+    p.add_argument('-o', '--output',
+                   dest='OUTPUT',
+                   default='both',
+                   choices=['stdout', 'xclip', 'both'],
+                   help='Write results to stdout or xclip or both.')
 
     p.add_argument('-r', '--remote',
                    dest='REMOTE',
@@ -183,6 +191,42 @@ def display_comment(f, mode, relpath, branch, branchurl, commit,
             ))
     else:
         assert False, 'unreachable code'
+
+
+class Outputter (object):
+    def __init__(self, outmode):
+        self._files = []
+        self._proc = None
+
+        if outmode in ('stdout', 'both'):
+            self._files.append(sys.stdout)
+
+        if outmode in ('xclip', 'both'):
+            self._proc = subprocess.Popen(
+                ['xclip', '-selection', 'clipboard', '-in'],
+                stdin=subprocess.PIPE)
+
+            self._files.append(self._proc.stdin)
+
+    # Context interface:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
+
+    # File interface:
+    def write(self, output):
+        for f in self._files:
+            f.write(output)
+
+    def close(self):
+        for f in self._files:
+            f.flush()
+            f.close()
+
+        if self._proc is not None:
+            self._proc.wait()
 
 
 if __name__ == '__main__':
