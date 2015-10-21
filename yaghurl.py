@@ -70,6 +70,7 @@ def parse_args(args):
 
 
 def get_git_info(path, remotename):
+    path = os.path.abspath(path)
     git = GitWrapper(path)
     urlish = get_remote_urlish(git, remotename)
     branch = git('rev-parse', '--abbrev-ref', 'HEAD').strip()
