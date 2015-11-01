@@ -31,3 +31,9 @@ of this repository, you could do:
    $ yaghurl ./yaghurl/main.py 11 15
    [``./yaghurl/main.py`` L11-L15 at ``87f81660``](https://github.com//nejucomo/yaghurl/blob/87f816605bd4c9fc5669161015c7482cad5009cb/./yaghurl/main.py#L11-L15) ([latest on branch ``master``](https://github.com//nejucomo/yaghurl/blob/master/./yaghurl/main.py#L11-L15))
 
+After running that command, I pasted the result into `a ticket #1
+comment`_, which shows you how the links appear. Note also, that the
+yaghurl command used `xclip`_ directly, so I didn't need to copy the
+output with my mouse first.
+
+.. _`a ticket #1 comment`: https://github.com/nejucomo/yaghurl/issues/1#issuecomment-152858902
