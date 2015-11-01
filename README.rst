@@ -37,3 +37,5 @@ yaghurl command used `xclip`_ directly, so I didn't need to copy the
 output with my mouse first.
 
 .. _`a ticket #1 comment`: https://github.com/nejucomo/yaghurl/issues/1#issuecomment-152858902
+
+.. _`xclip`: http://sourceforge.net/projects/xclip/
