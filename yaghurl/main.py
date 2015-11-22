@@ -117,7 +117,6 @@ class GitWrapper (object):
 
         self.repodir = d
 
-        relparts.append('.')
         self.relpath = '/'.join(reversed(relparts))
 
     def __call__(self, *args):
