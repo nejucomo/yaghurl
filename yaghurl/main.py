@@ -14,7 +14,9 @@ def main(args=sys.argv[1:]):
     Pronounced as if hurling a yag.
     """
     opts = parse_args(args)
-    (urlish, relpath, branch, commit) = get_git_info(opts.LOCALPATH, opts.REMOTE)
+    (urlish, relpath, branch, commit) = get_git_info(
+        opts.LOCALPATH,
+        opts.REMOTE)
     (branchurl, commiturl) = calculate_urls(urlish, relpath, branch, commit,
                                             opts.LINE, opts.ENDLINE)
 
@@ -125,7 +127,9 @@ class GitWrapper (object):
 def calculate_urls(urlish, relpath, branch, commit, line, endline):
     url = patch_git_urlish(urlish)
     urlp = urlparse.urlparse(url)
-    urltmpl = '{scheme}://{netloc}/{basepath}/blob/{{}}/{relpath}{linefrag}'.format(
+    urlmetatmpl = ('{scheme}://{netloc}{basepath}/blob/'
+                   + '{{}}/{relpath}{linefrag}')
+    urltmpl = urlmetatmpl.format(
         scheme=urlp.scheme,
         netloc=urlp.netloc,
         basepath=urlp.path,
